@@ -262,10 +262,6 @@ let state={
  claimedRewards:JSON.parse(localStorage.getItem("claimedRewards")||"[]")
 };
 
-// 🚨 خط تقلب (فقط برای خودت) 🚨
-state.cp = 1000000; localStorage.setItem("cp", 1000000);
-// 🚨 بعد از گرفتن سکه، این خط رو پاک کن! 🚨
-
 state.cp = Math.max(0, Number.isFinite(state.cp) ? Math.floor(state.cp) : 0);
 state.xp = Math.max(0, Number.isFinite(state.xp) ? Math.floor(state.xp) : 0);
 state.level = Math.max(1, Number.isFinite(state.level) ? Math.floor(state.level) : 1);

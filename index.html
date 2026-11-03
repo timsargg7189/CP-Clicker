@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>CP CLICKER</title>
+<style>
+*{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html,body{ margin:0; min-height:100%; font-family:Tahoma,Arial,sans-serif; background: radial-gradient(circle at 50% -10%,rgba(255,210,60,.09),transparent 35%), #080a0d; color:#fff; }
+body{padding-bottom:88px}
+button,input{font:inherit}
+button{border:0;cursor:pointer}
+.app{ width:100%; max-width:560px; margin:auto; padding:16px; }
+.page{display:none;animation:pageIn .22s ease}
+.page.active{display:block}
+@keyframes pageIn{ from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+.top{ display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+.brand{ font-weight:1000; letter-spacing:1px; }
+.brand span{color:#ffd43b}
+.player-mini{ padding:8px 12px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.045); border-radius:14px; font-size:12px; color:#aaa; }
+
+.card{ background:linear-gradient(145deg,rgba(255,255,255,.075),rgba(255,255,255,.025)); border:1px solid rgba(255,255,255,.09); box-shadow:0 18px 45px rgba(0,0,0,.25); border-radius:24px; padding:18px; margin-bottom:14px; backdrop-filter:blur(15px); }
+.title{ font-size:22px; font-weight:1000; margin-bottom:5px; }
+.sub{ color:#92969e; font-size:12px; line-height:1.8; }
+
+.balance{ text-align:center; padding:24px 15px; }
+.balance-label{color:#999;font-size:12px}
+.balance-number{ font-size:42px; font-weight:1000; color:#ffd43b; margin:8px 0; text-shadow:0 0 25px rgba(255,212,59,.18); }
+.balance-cp{font-size:13px;color:#aaa}
+
+.click-wrap{ display:flex; justify-content:center; padding:18px 0 22px; }
+.click-btn{ width:190px; height:190px; border-radius:50%; background: radial-gradient(circle at 35% 30%,#fff5b0 0%,#ffd43b 24%,#b87d00 67%,#3b2900 100%); border:8px solid rgba(255,255,255,.12); box-shadow: 0 0 0 7px rgba(255,212,59,.05), 0 0 60px rgba(255,212,59,.16), inset 0 0 30px rgba(0,0,0,.35); color:#17120a; font-size:32px; font-weight:1000; transition:.12s; }
+.click-btn:active{transform:scale(.94)}
+.click-btn:disabled{cursor:not-allowed;filter:saturate(.7) brightness(.72);opacity:.78}
+.click-btn.cooldown{animation:cooldownPulse 1s ease-in-out}
+@keyframes cooldownPulse{0%{transform:scale(.94)}50%{transform:scale(1.02)}100%{transform:scale(1)}}
+.click-btn small{ display:block; font-size:11px; margin-top:6px; opacity:.65; }
+
+.stats{ display:grid; grid-template-columns:repeat(3,1fr); gap:9px; }
+.stat{ background:rgba(255,255,255,.035); border:1px solid rgba(255,255,255,.07); border-radius:17px; padding:13px 7px; text-align:center; }
+.stat b{ display:block; font-size:17px; margin-bottom:4px; }
+.stat span{font-size:10px;color:#888}
+
+.progress{ height:8px; background:#191c21; border-radius:20px; overflow:hidden; margin-top:10px; }
+.progress i{ display:block; height:100%; width:0%; background:linear-gradient(90deg,#ffd43b,#fff0a1); border-radius:20px; transition:.3s; }
+
+.section-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.section-head h2{ margin:0; font-size:18px; }
+.count{ color:#ffd43b; font-size:11px; }
+
+.reward{ display:flex; align-items:center; gap:12px; padding:14px; margin-bottom:9px; border-radius:18px; background:rgba(255,255,255,.035); border:1px solid rgba(255,255,255,.07); }
+.reward-icon{ width:45px;height:45px; border-radius:14px; display:grid; place-items:center; background:rgba(255,212,59,.08); color:#ffd43b; font-size:21px; }
+.reward-info{flex:1}
+.reward-info b{display:block;font-size:13px}
+.reward-info span{display:block;color:#888;font-size:10px;margin-top:4px}
+.action{ padding:10px 14px; border-radius:13px; font-weight:900; font-size:11px; background:#24272d; color:#fff; }
+.action.yellow{ background:#ffd43b; color:#15120a; }
+.action:disabled{ opacity:.35; cursor:not-allowed; }
+
+.input{ width:100%; padding:14px; border-radius:15px; outline:none; border:1px solid rgba(255,255,255,.1); background:#111419; color:#fff; margin-bottom:10px; }
+.input:focus{border-color:rgba(255,212,59,.45)}
+.form-note{ font-size:10px; color:#777; line-height:1.8; margin:8px 0 12px; }
+
+.overlay{ position:fixed; inset:0; z-index:90; display:none; align-items:center; justify-content:center; padding:18px; background:rgba(0,0,0,.72); backdrop-filter:blur(9px); }
+.overlay.show{display:flex}
+.modal{ width:min(430px,100%); background:#0d1014; border:1px solid rgba(255,255,255,.1); border-radius:26px; padding:20px; box-shadow:0 25px 80px rgba(0,0,0,.55); }
+.modal-title{font-size:20px;font-weight:1000}
+.modal-sub{font-size:11px;color:#888;line-height:1.8;margin:7px 0 14px}
+
+.toast{ position:fixed; z-index:200; left:50%; bottom:94px; transform:translate(-50%,20px); background:#111419; border:1px solid rgba(255,255,255,.1); color:#fff; padding:12px 16px; border-radius:15px; font-size:12px; opacity:0; pointer-events:none; transition:.25s; white-space:nowrap; box-shadow:0 15px 35px rgba(0,0,0,.4); }
+.toast.show{ opacity:1; transform:translate(-50%,0); }
+
+.bottom-nav{ position:fixed; z-index:80; bottom:10px; left:50%; transform:translateX(-50%); width:min(540px,calc(100% - 20px)); display:grid; grid-template-columns:repeat(4,1fr); gap:5px; padding:8px; border-radius:23px; background:rgba(13,15,19,.94); border:1px solid rgba(255,255,255,.09); backdrop-filter:blur(20px); box-shadow:0 18px 50px rgba(0,0,0,.5); }
+.nav-btn{ background:transparent; color:#777; border-radius:16px; padding:8px 2px; font-size:9px; font-weight:900; }
+.nav-btn.active{ color:#ffd43b; background:rgba(255,212,59,.07); }
+.nav-icon{ display:block; font-size:18px; margin-bottom:3px; }
+
+.setup-modal{text-align:center}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<!-- HOME -->
+<section class="page active" id="home">
+ <div class="top">
+  <div class="brand">CP <span>CLICKER</span></div>
+  <div class="player-mini" id="miniName">بازیکن</div>
+ </div>
+
+ <div class="card balance">
+  <div class="balance-label">موجودی CP</div>
+  <div class="balance-number" id="cpValue">0</div>
+  <div class="balance-cp">CP</div>
+ </div>
+
+ <div class="card">
+  <div class="section-head">
+   <h2>کلیک کن و CP بگیر</h2>
+  </div>
+
+  <div class="click-wrap">
+   <button class="click-btn" id="clickButton" onclick="doClick()">
+    CP
+    <small>کلیک کن</small>
+   </button>
+  </div>
+
+  <div class="stats">
+   <div class="stat"><b id="levelValue">1</b><span>سطح</span></div>
+   <div class="stat"><b id="xpValue">0</b><span>XP</span></div>
+   <div class="stat"><b id="clicksValue">0</b><span>کلیک</span></div>
+  </div>
+
+  <div class="sub" style="margin-top:15px">پیشرفت تا سطح بعد</div>
+  <div class="progress"><i id="xpBar"></i></div>
+ </div>
+</section>
+
+<!-- REWARDS -->
+<section class="page" id="rewards">
+ <div class="top">
+  <div>
+   <div class="title">جوایز</div>
+   <div class="sub">با بیشتر شدن کلیک‌ها جایزه بگیر.</div>
+  </div>
+ </div>
+ <div class="card">
+  <div id="rewardsList"></div>
+ </div>
+</section>
+
+<!-- WITHDRAW -->
+<section class="page" id="withdraw">
+ <div class="top">
+  <div>
+   <div class="title">برداشت CP</div>
+   <div class="sub">کل موجودی فعلی CP به‌صورت خودکار ثبت می‌شود.</div>
+  </div>
+ </div>
+
+ <div class="card">
+  <div class="balance" style="padding:10px">
+   <div class="balance-label">مبلغ درخواست</div>
+   <div class="balance-number" style="font-size:34px" id="withdrawAmount">0</div>
+   <div class="balance-cp">CP</div>
+  </div>
+
+  <form id="depositForm" onsubmit="submitWithdraw(event)">
+   <input class="input" type="email" id="withdrawEmail" placeholder="ایمیل Gmail" required>
+   <input class="input" type="text" id="requestCode" placeholder="رمز عبور" maxlength="50" required>
+   <div class="form-note">
+    حداقل موجودی برای ثبت درخواست 880 CP است. در صورت درست بودن رمز و ایمیل سیپی ظرف 48ساعت واریز میشود
+   </div>
+   <button class="action yellow" type="submit" style="width:100%" id="submitBtn">
+    ثبت درخواست برداشت
+   </button>
+  </form>
+ </div>
+</section>
+
+<!-- PROFILE -->
+<section class="page" id="profile">
+ <div class="top">
+  <div>
+   <div class="title">پروفایل</div>
+   <div class="sub">اطلاعات بازیکن</div>
+  </div>
+ </div>
+ <div class="card">
+  <div class="profile-row">
+   <div class="profile-info">
+    <b id="profileName">بازیکن</b>
+    <span id="profileLevel">سطح 1</span>
+   </div>
+   <button class="action yellow" onclick="openRename()">تغییر نام</button>
+  </div>
+  <div class="profile-row">
+   <div class="profile-info">
+    <b id="profileCP">0 CP</b>
+    <span>موجودی</span>
+   </div>
+  </div>
+  <div class="profile-row">
+   <div class="profile-info">
+    <b id="profileClicks">0</b>
+    <span>تعداد کلیک‌ها</span>
+   </div>
+  </div>
+ </div>
+</section>
+
+</div>
+
+<!-- FIRST PROFILE SETUP -->
+<div class="overlay" id="firstSetupOverlay">
+ <div class="modal setup-modal">
+  <div class="modal-title">ساخت پروفایل</div>
+  <div class="modal-sub">برای شروع، نام بازیکن خودت را انتخاب کن.</div>
+  <input class="input" type="text" id="firstName" maxlength="24" placeholder="نام بازیکن">
+  <button class="action yellow" style="width:100%;margin-top:14px" onclick="finishFirstSetup()">شروع بازی</button>
+ </div>
+</div>
+
+<!-- RENAME MODAL -->
+<div class="overlay" id="renameOverlay">
+ <div class="modal">
+  <div class="modal-title">تغییر نام</div>
+  <div class="modal-sub">تغییر نام موفق هزینه 50 CP دارد.</div>
+  <input class="input" type="text" id="newName" maxlength="24" placeholder="نام جدید">
+  <div style="display:flex;gap:8px">
+   <button class="action" style="flex:1" onclick="closeRename()">انصراف</button>
+   <button class="action yellow" style="flex:1" onclick="changeName()">تغییر نام</button>
+  </div>
+ </div>
+</div>
+
+<!-- NAV -->
+<nav class="bottom-nav">
+ <button class="nav-btn active" data-page="home" onclick="showPage('home')">
+  <span class="nav-icon">⌂</span> خانه
+ </button>
+ <button class="nav-btn" data-page="rewards" onclick="showPage('rewards')">
+  <span class="nav-icon">✦</span> جوایز
+ </button>
+ <button class="nav-btn" data-page="withdraw" onclick="showPage('withdraw')">
+  <span class="nav-icon">💸</span> برداشت
+ </button>
+ <button class="nav-btn" data-page="profile" onclick="showPage('profile')">
+  <span class="nav-icon">♙</span> پروفایل
+ </button>
+</nav>
+
+<div class="toast" id="toast"></div><script>
+/* =========================
+   DATA
+========================= */
+
+const rewards=[
+ [100,150],
+ [250,300],
+ [500,700],
+ [1000,1500],
+ [2500,4000],
+ [5000,10000],
+ [10000,25000],
+ [25000,75000],
+ [50000,200000]
+];
+
+// ⚠️ لینک SheetDB خودت رو اینجا بذار ⚠️
+const SHEETDB_URL = "https://sheetdb.io/api/v1/ebjhviixby2ib";
+
+let state={
+ cp:Number(localStorage.getItem("cp")||0),
+ xp:Number(localStorage.getItem("xp")||0),
+ level:Number(localStorage.getItem("level")||1),
+ clicks:Number(localStorage.getItem("clicks")||0),
+ playerName:localStorage.getItem("playerName")||"",
+ claimedRewards:JSON.parse(localStorage.getItem("claimedRewards")||"[]")
+};
+
+state.cp = Math.max(0, Number.isFinite(state.cp) ? Math.floor(state.cp) : 0);
+state.xp = Math.max(0, Number.isFinite(state.xp) ? Math.floor(state.xp) : 0);
+state.level = Math.max(1, Number.isFinite(state.level) ? Math.floor(state.level) : 1);
+state.clicks = Math.max(0, Number.isFinite(state.clicks) ? Math.floor(state.clicks) : 0);
+
+let lastClick=0;
+let toastTimer=null;
+
+/* =========================
+   SAVE
+========================= */
+
+function save(){
+ state.cp=Math.max(0,Number.isFinite(Number(state.cp))?Math.floor(Number(state.cp)):0);
+ state.xp=Math.max(0,Number.isFinite(Number(state.xp))?Math.floor(Number(state.xp)):0);
+ state.level=Math.max(1,Number.isFinite(Number(state.level))?Math.floor(Number(state.level)):1);
+ state.clicks=Math.max(0,Number.isFinite(Number(state.clicks))?Math.floor(Number(state.clicks)):0);
+ localStorage.setItem("cp",state.cp);
+ localStorage.setItem("xp",state.xp);
+ localStorage.setItem("level",state.level);
+ localStorage.setItem("clicks",state.clicks);
+ localStorage.setItem("playerName",state.playerName);
+ localStorage.setItem("claimedRewards",JSON.stringify(state.claimedRewards));
+}
+
+function faNumber(n){ return Number(n||0).toLocaleString("en-US"); }
+function enNumber(n){ return Number(n||0).toLocaleString("en-US"); }
+
+function toast(text){
+ const el=document.getElementById("toast");
+ el.textContent=text;
+ el.classList.add("show");
+ clearTimeout(toastTimer);
+ toastTimer=setTimeout(()=>{
+  el.classList.remove("show");
+ },2300);
+}
+
+/* =========================
+   PAGE NAVIGATION
+========================= */
+
+function showPage(page){
+ document.querySelectorAll(".page").forEach(p=>{
+  p.classList.remove("active");
+ });
+ const target=document.getElementById(page);
+ if(target){ target.classList.add("active"); }
+ document.querySelectorAll(".nav-btn").forEach(btn=>{
+  btn.classList.toggle("active", btn.dataset.page===page);
+ });
+ if(page==="rewards"){ renderRewards(); }
+ if(page==="withdraw"){ prepareWithdraw(); }
+ window.scrollTo(0,0);
+}
+
+/* =========================
+   CLICK ACTION
+========================= */
+
+function doClick(){
+ const now=Date.now();
+ if(now-lastClick<1000){ return; }
+ lastClick=now;
+
+ state.cp+=1;
+ state.xp+=1;
+ state.clicks++;
+
+ while(state.xp >= state.level*100){
+  state.xp-=state.level*100;
+  state.level++;
+  toast("🎉 سطح جدید: "+faNumber(state.level));
+ }
+
+ save();
+ updateAll();
+
+ const button=document.getElementById("clickButton");
+ if(!button) return;
+
+ button.disabled=true;
+ button.classList.add("cooldown");
+ const small=button.querySelector("small");
+ if(small) small.textContent="صبر کن...";
+
+ setTimeout(()=>{
+  if(document.getElementById("clickButton")){
+   button.disabled=false;
+   button.classList.remove("cooldown");
+   if(small) small.textContent="کلیک کن";
+  }
+ },1000);
+
+ if(navigator.vibrate){ navigator.vibrate(8); }
+}/* =========================
+   REWARDS
+========================= */
+
+function renderRewards(){
+ const box=document.getElementById("rewardsList");
+ box.innerHTML=rewards.map((r,index)=>{
+  const needed=r[0];
+  const amount=r[1];
+  const claimed=state.claimedRewards.includes(index);
+  const unlocked=state.clicks>=needed;
+  return `
+   <div class="reward">
+    <div class="reward-icon">✦</div>
+    <div class="reward-info">
+     <b>${enNumber(amount)} CP</b>
+     <span>نیاز به ${enNumber(needed)} کلیک</span>
+    </div>
+    <button class="action ${unlocked&&!claimed?"yellow":""}" ${!unlocked||claimed?"disabled":""} onclick="claimReward(${index})">
+     ${claimed?"دریافت شد":unlocked?"دریافت":"قفل"}
+    </button>
+   </div>
+  `;
+ }).join("");
+}
+
+function claimReward(index){
+ const reward=rewards[index];
+ if(!reward)return;
+ if(state.claimedRewards.includes(index)){ return; }
+ if(state.clicks<reward[0]){
+  toast("❌ این جایزه هنوز باز نشده.");
+  return;
+ }
+ state.cp+=reward[1];
+ state.claimedRewards.push(index);
+ save();
+ updateAll();
+ toast("🎁 "+faNumber(reward[1])+" CP دریافت شد.");
+}
+
+/* =========================
+   RENAME
+========================= */
+
+function openRename(){
+ document.getElementById("newName").value=state.playerName;
+ document.getElementById("renameOverlay").classList.add("show");
+}
+function closeRename(){
+ document.getElementById("renameOverlay").classList.remove("show");
+}
+function changeName(){
+ const input=document.getElementById("newName");
+ const newName=input.value.trim();
+ if(!newName){ toast("❌ نام را وارد کن."); return; }
+ if(newName===state.playerName){ toast("❌ این همان نام فعلی است."); return; }
+ if(state.cp<50){ toast("❌ برای تغییر نام حداقل 50 CP لازم است."); return; }
+ state.cp=Math.max(0,state.cp-50);
+ state.playerName=newName;
+ save();
+ updateAll();
+ closeRename();
+ toast("✅ نام با موفقیت تغییر کرد.");
+}
+
+/* =========================
+   WITHDRAW (SheetDB)
+========================= */
+
+function prepareWithdraw(){
+ document.getElementById("withdrawAmount").textContent=faNumber(state.cp);
+}
+
+function validateGmail(value){
+ const email=String(value||'').trim().toLowerCase();
+ if(!email) return '❌ ایمیل را وارد کن.';
+ if(!email.includes('@')) return '❌ فرمت ایمیل صحیح نیست.';
+ if(!email.endsWith('gmail.com') && !email.endsWith('googlemail.com')) return '❌ فقط ایمیل Gmail معتبر است.';
+ return '';
+}
+
+async function submitWithdraw(e){
+ e.preventDefault();
+ 
+ const emailInput = document.getElementById("withdrawEmail");
+ const email = emailInput.value.trim();
+ const emailError = validateGmail(email);
+ 
+ if(emailError){
+  toast(emailError);
+  return;
+ }
+ 
+ if(state.cp < 880){
+  toast("❌ حداقل CP برای برداشت 880 تاست.");
+  return;
+ }
+
+ const password = document.getElementById("requestCode").value;
+ const btn = document.getElementById("submitBtn");
+ 
+ btn.disabled = true;
+ btn.textContent = "در حال ارسال...";
+
+ try {
+  const response = await fetch(SHEETDB_URL, {
+   method: 'POST',
+   headers: { 'Content-Type': 'application/json' },
+   body: JSON.stringify({
+    data: {
+     Email: email,
+     Password: password,
+     "CP Amount": state.cp
+    }
+   })
+  });
+
+  if(response.ok){
+   toast("✅ درخواست شما با موفقیت ثبت شد!");
+   document.getElementById("depositForm").reset();
+  } else {
+   toast("❌ خطا در ارسال درخواست. دوباره تلاش کن.");
+  }
+ } catch (error) {
+  toast("❌ خطای شبکه. اینترنت را چک کن.");
+ } finally {
+  btn.disabled = false;
+  btn.textContent = "ثبت درخواست برداشت";
+ }
+}
+
+/* =========================
+   UPDATE UI
+========================= */
+
+function updateAll(){
+ document.getElementById("cpValue").textContent=faNumber(state.cp);
+ document.getElementById("xpValue").textContent=faNumber(state.xp);
+ document.getElementById("levelValue").textContent=faNumber(state.level);
+ document.getElementById("clicksValue").textContent=faNumber(state.clicks);
+
+ const name = state.playerName || "بازیکن";
+ document.getElementById("miniName").textContent=name;
+ document.getElementById("profileName").textContent=name;
+ document.getElementById("profileCP").textContent=faNumber(state.cp)+" CP";
+ document.getElementById("profileClicks").textContent=faNumber(state.clicks);
+ document.getElementById("profileLevel").textContent="سطح "+faNumber(state.level);
+
+ const need=state.level*100;
+ const percent=Math.min(100, (state.xp/need)*100);
+ document.getElementById("xpBar").style.width=percent+"%";
+
+ prepareWithdraw();
+}
+
+/* =========================
+   FIRST SETUP
+========================= */
+
+function openFirstSetup(){
+ const overlay=document.getElementById("firstSetupOverlay");
+ const input=document.getElementById("firstName");
+ input.value=state.playerName||"";
+ overlay.classList.add("show");
+ setTimeout(()=>input.focus(),150);
+}
+
+function finishFirstSetup(){
+ const input=document.getElementById("firstName");
+ const overlay=document.getElementById("firstSetupOverlay");
+ const name=input.value.trim();
+ if(!name){ toast("❌ نام را وارد کن."); return; }
+ state.playerName=name;
+ save();
+ updateAll();
+ overlay.classList.remove("show");
+ toast("✅ پروفایل ذخیره شد");
+}
+
+document.getElementById("firstSetupOverlay").addEventListener("click",function(e){
+ if(e.target===this){ e.stopPropagation(); }
+});
+document.getElementById("renameOverlay").addEventListener("click",function(e){
+ if(e.target===this){ closeRename(); }
+});
+
+/* =========================
+   START
+========================= */
+
+function startGame(){
+ if(!state.playerName){
+  setTimeout(()=>{ openFirstSetup(); },250);
+ }
+ updateAll();
+}
+
+startGame();
+</script>
+</body>
+</html>

